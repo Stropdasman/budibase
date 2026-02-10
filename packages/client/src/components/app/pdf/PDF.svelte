@@ -6,7 +6,7 @@
   import CustomThemeWrapper from "@/components/CustomThemeWrapper.svelte"
 
   const component = getContext("component")
-  const { styleable, Block, BlockComponent } = getContext("sdk")
+  const { styleable, Block, BlockComponent, API } = getContext("sdk")
 
   export let fileName: string | undefined
   export let buttonText: string | undefined
@@ -32,6 +32,7 @@
     rendering = true
     await tick()
     preprocessCSS()
+    const restoreImages = await inlineExternalImages()
     try {
       const opts: PDFOptions = {
         fileName: safeName,
@@ -41,8 +42,66 @@
       await htmlToPdf(ref, opts)
     } catch (error) {
       console.error("Error rendering PDF", error)
+    } finally {
+      restoreImages?.()
     }
     rendering = false
+  }
+
+  const inlineExternalImages = async () => {
+    if (!ref) {
+      return
+    }
+
+    const images = Array.from(ref.querySelectorAll("img")).filter(image => {
+      const src = image.getAttribute("src") || ""
+      return (
+        (src.startsWith("http://") || src.startsWith("https://")) &&
+        !src.startsWith("data:")
+      )
+    })
+
+    if (!images.length) {
+      return
+    }
+
+    const originalSources = new Map<HTMLImageElement, string>()
+    images.forEach(image => {
+      const src = image.getAttribute("src")
+      if (src) {
+        originalSources.set(image, src)
+      }
+    })
+
+    try {
+      const processed = await API.inlinePdfImages(ref.innerHTML)
+      if (!processed) {
+        return () => restoreImageSources(originalSources)
+      }
+
+      const container = document.createElement("div")
+      container.innerHTML = processed
+      const processedImages = Array.from(container.querySelectorAll("img"))
+
+      images.forEach((image, index) => {
+        const processedSrc = processedImages[index]?.getAttribute("src")
+        if (processedSrc) {
+          image.setAttribute("src", processedSrc)
+        }
+      })
+    } catch (error) {
+      console.error("Error inlining PDF images", error)
+    }
+
+    return () => restoreImageSources(originalSources)
+  }
+
+  const restoreImageSources = (
+    sources: Map<HTMLImageElement, string>
+  ) => {
+    sources.forEach((src, image) => {
+      image.setAttribute("src", src)
+    })
   }
 
   const preprocessCSS = () => {

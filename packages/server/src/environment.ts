@@ -23,6 +23,13 @@ function parseIntSafe(number?: string) {
   }
 }
 
+function parseBool(value: string | undefined, defaultValue: boolean) {
+  if (value === undefined) {
+    return defaultValue
+  }
+  return value === "true" || value === "1"
+}
+
 const DEFAULTS = {
   QUERY_THREAD_TIMEOUT: 15000,
   AUTOMATION_THREAD_TIMEOUT: 120000,
@@ -36,6 +43,10 @@ const DEFAULTS = {
   AUTOMATION_MAX_NESTED_LOOPS: 3,
   AUTOMATION_MAX_STORED_LOOP_RESULTS: 50,
   AUTOMATION_MAX_LOG_SIZE_MB: 5,
+  PDF_INLINE_EXTERNAL_IMAGES: true,
+  PDF_IMAGE_MAX_BYTES: 5 * 1024 * 1024,
+  PDF_IMAGE_TIMEOUT_MS: 8000,
+  PDF_IMAGE_BLOCK_PRIVATE_IPS: true,
 }
 
 const QUERY_THREAD_TIMEOUT =
@@ -159,6 +170,21 @@ const environment = {
     process.env.LITELLM_URL ||
     `http://localhost:${process.env.LITELLM_PORT || "4000"}`,
   LITELLM_MASTER_KEY: process.env.LITELLM_MASTER_KEY,
+  PDF_INLINE_EXTERNAL_IMAGES: parseBool(
+    process.env.PDF_INLINE_EXTERNAL_IMAGES,
+    DEFAULTS.PDF_INLINE_EXTERNAL_IMAGES
+  ),
+  PDF_IMAGE_MAX_BYTES:
+    parseIntSafe(process.env.PDF_IMAGE_MAX_BYTES) ||
+    DEFAULTS.PDF_IMAGE_MAX_BYTES,
+  PDF_IMAGE_TIMEOUT_MS:
+    parseIntSafe(process.env.PDF_IMAGE_TIMEOUT_MS) ||
+    DEFAULTS.PDF_IMAGE_TIMEOUT_MS,
+  PDF_IMAGE_ALLOW_DOMAINS: process.env.PDF_IMAGE_ALLOW_DOMAINS || "",
+  PDF_IMAGE_BLOCK_PRIVATE_IPS: parseBool(
+    process.env.PDF_IMAGE_BLOCK_PRIVATE_IPS,
+    DEFAULTS.PDF_IMAGE_BLOCK_PRIVATE_IPS
+  ),
   // old
   CLIENT_ID: process.env.CLIENT_ID,
   _set(key: string, value: any) {

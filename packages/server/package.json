@@ -74,6 +74,7 @@
     "buffer": "6.0.3",
     "bull": "4.10.1",
     "chokidar": "3.5.3",
+    "cheerio": "^1.0.0-rc.12",
     "content-disposition": "^0.5.4",
     "cookies": "0.9.1",
     "csvtojson": "2.0.13",

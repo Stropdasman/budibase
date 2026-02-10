@@ -3,6 +3,8 @@ import {
   FetchIntegrationsResponse,
   GetEnvironmentResponse,
   GetVersionResponse,
+  InlinePdfImagesRequest,
+  InlinePdfImagesResponse,
   SystemStatusResponse,
 } from "@budibase/types"
 import { BaseAPIClient } from "./types"
@@ -13,6 +15,7 @@ export interface OtherEndpoints {
   getIntegrations: () => Promise<FetchIntegrationsResponse>
   getBasePermissions: () => Promise<FetchBuiltinPermissionsResponse>
   getEnvironment: () => Promise<GetEnvironmentResponse>
+  inlinePdfImages: (html: string) => Promise<string>
 }
 
 export const buildOtherEndpoints = (API: BaseAPIClient): OtherEndpoints => ({
@@ -61,5 +64,16 @@ export const buildOtherEndpoints = (API: BaseAPIClient): OtherEndpoints => ({
     return await API.get({
       url: "/api/permission/builtin",
     })
+  },
+
+  inlinePdfImages: async (html: string) => {
+    return (
+      await API.post<InlinePdfImagesRequest, InlinePdfImagesResponse>({
+        url: "/api/pdf/inline-images",
+        body: {
+          html,
+        },
+      })
+    ).html
   },
 })
